@@ -65,19 +65,34 @@ type Header struct {
 }
 
 func (h *Header) Marshal() []byte {
-	encoded := make([]byte, HeaderSize)
+	encoded := make([]byte, HeaderSize) // Assuming HeaderSize is 12
 
-	offset := 0
-	binary.BigEndian.PutUint16(encoded[offset:offset+2], h.ID)
+	binary.BigEndian.PutUint16(encoded[0:2], h.ID)
+
+	encoded[2] = uint8(h.OpCode) << 3
 	if h.QR {
 		encoded[2] |= 1 << 7
 	}
-
 	if h.AA {
 		encoded[2] |= 1 << 2
 	}
+	if h.TC {
+		encoded[2] |= 1 << 1
+	}
+	if h.RD {
+		encoded[2] |= 1
+	}
 
-	encoded[2] |= h.OpCode << 3
+	encoded[3] = h.Z << 4
+	if h.RA {
+		encoded[3] |= 1 << 7
+	}
+	encoded[3] |= h.RCode & 0xF
+
+	binary.BigEndian.PutUint16(encoded[4:6], h.QDCount)
+	binary.BigEndian.PutUint16(encoded[6:8], h.ANCount)
+	binary.BigEndian.PutUint16(encoded[8:10], h.NSCount)
+	binary.BigEndian.PutUint16(encoded[10:12], h.ARCount)
 
 	return encoded
 }
