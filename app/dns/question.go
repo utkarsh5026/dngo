@@ -53,7 +53,7 @@ func (q *Question) Marshal() ([]byte, error) {
 	for _, part := range parts {
 		buffer[offset] = byte(len(part))
 		offset++
-		copy(buffer[offset:], []byte(part))
+		copy(buffer[offset:], part)
 		offset += len(part)
 	}
 	buffer[offset] = 0x00
@@ -64,4 +64,40 @@ func (q *Question) Marshal() ([]byte, error) {
 	binary.BigEndian.PutUint16(buffer[offset:offset+2], q.Class)
 
 	return buffer, nil
+}
+
+// UnMarshallQuestion decodes a byte slice into a DNS Question struct.
+// The byte slice should contain the encoded DNS question in the format
+// specified by RFC 1035.
+//
+// Parameters:
+// - encoded: A byte slice containing the encoded DNS question.
+//
+// Returns:
+// - A pointer to a Question struct populated with the decoded values.
+//
+// - An integer representing the number of bytes read from the encoded slice.
+//
+// - An error if any issue occurs during decoding.
+func UnMarshallQuestion(encoded []byte) (*Question, int, error) {
+	offset := 0
+	var parts []string
+	for {
+		labelLength := int(encoded[offset])
+		if labelLength == 0 {
+			break
+		}
+		offset++
+		parts = append(parts, string(encoded[offset:offset+labelLength]))
+		offset += labelLength
+	}
+	offset++
+
+	q := &Question{
+		Name:  strings.Join(parts, "."),
+		Type:  binary.BigEndian.Uint16(encoded[offset : offset+2]),
+		Class: binary.BigEndian.Uint16(encoded[offset+2 : offset+4]),
+	}
+
+	return q, offset + 4, nil
 }

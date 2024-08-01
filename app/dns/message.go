@@ -19,10 +19,39 @@ func (m *Message) Marshal() []byte {
 
 	return encoded
 }
-func CreateDnsMessage(header *Header, question *Question, answer *Answer) *Message {
+
+func UnMarshallMessage(encoded []byte) (*Message, error) {
+	header := UnmarshalHeader(encoded)
+	question, _, err := UnMarshallQuestion(encoded[HeaderSize:])
+
+	if err != nil {
+		return nil, err
+	}
+
+	var answer Answer
+
+	header.ANCount = 1
+	header.QDCount = 1
+	header.QR = true
+
+	if header.OpCode == 0 {
+		header.RCode = 0
+	} else {
+		header.RCode = 4
+	}
+
 	return &Message{
 		Header:   *header,
 		Question: *question,
-		Answer:   *answer,
+		Answer:   answer,
+	}, nil
+}
+
+func (m *Message) FormAnswer() *Answer {
+	return &Answer{
+		Name:  m.Question.Name,
+		Type:  1,
+		Class: 1,
+		TTL:   60,
 	}
 }

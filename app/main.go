@@ -39,39 +39,46 @@ func main() {
 			break
 		}
 
-		receivedData := string(buf[:size])
-		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
+		// receivedData := string(buf[:size])
+		// fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
+		//
+		// receivedHeader := dns.UnmarshalHeader(buf[:size])
+		// header := dns.Header{
+		// 	ID:      receivedHeader.ID,
+		// 	OpCode:  receivedHeader.OpCode,
+		// 	QR:      true,
+		// 	QDCount: 1,
+		// 	ANCount: 1,
+		// 	RD:      receivedHeader.RD,
+		// }
+		//
+		// if receivedHeader.OpCode == 0 {
+		// 	header.RCode = 0
+		// } else {
+		// 	header.RCode = 4
+		// }
+		//
+		// question := dns.Question{
+		// 	Name:  "codecrafters.io",
+		// 	Type:  1,
+		// 	Class: 1,
+		// }
+		//
+		// answer := dns.Answer{
+		// 	Name:  "codecrafters.io",
+		// 	Type:  1,
+		// 	Class: 1,
+		// 	TTL:   60,
+		// }
 
-		receivedHeader := dns.UnmarshalHeader(buf[:size])
-		header := dns.Header{
-			ID:      receivedHeader.ID,
-			OpCode:  receivedHeader.OpCode,
-			QR:      true,
-			QDCount: 1,
-			ANCount: 1,
-			RD:      receivedHeader.RD,
+		message, err := dns.UnMarshallMessage(buf[:size])
+
+		if err != nil {
+			fmt.Println("Failed to unmarshal message:", err)
+			continue
 		}
 
-		if receivedHeader.OpCode == 0 {
-			header.RCode = 0
-		} else {
-			header.RCode = 4
-		}
-
-		question := dns.Question{
-			Name:  "codecrafters.io",
-			Type:  1,
-			Class: 1,
-		}
-
-		answer := dns.Answer{
-			Name:  "codecrafters.io",
-			Type:  1,
-			Class: 1,
-			TTL:   60,
-		}
-
-		message := dns.CreateDnsMessage(&header, &question, &answer)
+		message.Answer = *message.FormAnswer()
 		_, err = udpConn.WriteToUDP(message.Marshal(), source)
 		if err != nil {
 			fmt.Println("Failed to send response:", err)

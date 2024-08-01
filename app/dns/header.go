@@ -69,7 +69,7 @@ func (h *Header) Marshal() []byte {
 
 	binary.BigEndian.PutUint16(encoded[0:2], h.ID)
 
-	encoded[2] = uint8(h.OpCode) << 3
+	encoded[2] = h.OpCode << 3
 	if h.QR {
 		encoded[2] |= 1 << 7
 	}
@@ -97,6 +97,14 @@ func (h *Header) Marshal() []byte {
 	return encoded
 }
 
+// UnmarshalHeader decodes a byte slice into a DNS Header struct.
+// The byte slice should be 12 bytes long, as per the DNS header specification.
+//
+// Parameters:
+// - encoded: A byte slice containing the encoded DNS header.
+//
+// Returns:
+// - A pointer to a Header struct populated with the decoded values.
 func UnmarshalHeader(encoded []byte) *Header {
 	return &Header{
 		ID:      binary.BigEndian.Uint16(encoded[0:2]),
@@ -106,7 +114,7 @@ func UnmarshalHeader(encoded []byte) *Header {
 		TC:      encoded[2]&(1<<1) != 0,
 		RD:      encoded[2]&1 != 0,
 		RA:      encoded[3]&(1<<7) != 0,
-		Z:       (encoded[3] >> 4) & 0xF,
+		Z:       (encoded[3] >> 4) & 0x7,
 		RCode:   encoded[3] & 0xF,
 		QDCount: binary.BigEndian.Uint16(encoded[4:6]),
 		ANCount: binary.BigEndian.Uint16(encoded[6:8]),
