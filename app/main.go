@@ -7,11 +7,8 @@ import (
 )
 
 func main() {
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
 
-	// Uncomment this block to pass the first stage
-	//
 	udpAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:2053")
 	if err != nil {
 		fmt.Println("Failed to resolve UDP address:", err)
@@ -39,46 +36,12 @@ func main() {
 			break
 		}
 
-		// receivedData := string(buf[:size])
-		// fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
-		//
-		// receivedHeader := dns.UnmarshalHeader(buf[:size])
-		// header := dns.Header{
-		// 	ID:      receivedHeader.ID,
-		// 	OpCode:  receivedHeader.OpCode,
-		// 	QR:      true,
-		// 	QDCount: 1,
-		// 	ANCount: 1,
-		// 	RD:      receivedHeader.RD,
-		// }
-		//
-		// if receivedHeader.OpCode == 0 {
-		// 	header.RCode = 0
-		// } else {
-		// 	header.RCode = 4
-		// }
-		//
-		// question := dns.Question{
-		// 	Name:  "codecrafters.io",
-		// 	Type:  1,
-		// 	Class: 1,
-		// }
-		//
-		// answer := dns.Answer{
-		// 	Name:  "codecrafters.io",
-		// 	Type:  1,
-		// 	Class: 1,
-		// 	TTL:   60,
-		// }
-
 		message, err := dns.UnMarshallMessage(buf[:size])
 
 		if err != nil {
 			fmt.Println("Failed to unmarshal message:", err)
 			continue
 		}
-
-		message.Answer = *message.FormAnswer()
 		_, err = udpConn.WriteToUDP(message.Marshal(), source)
 		if err != nil {
 			fmt.Println("Failed to send response:", err)

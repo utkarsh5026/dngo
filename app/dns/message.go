@@ -1,38 +1,61 @@
 package dns
 
 type Message struct {
-	Header   Header
-	Question Question
-	Answer   Answer
+	Header    Header
+	Questions []Question
+	Answers   []Answer
 }
 
+// Marshal encodes the DNS Message into a byte slice.
+// It marshals the Header, Question, and Answer fields of the Message
+// and concatenates their byte representations into a single byte slice.
+//
+// Returns:
+// - A byte slice containing the encoded DNS Message.
 func (m *Message) Marshal() []byte {
+	var encoded []byte
 	encodedHeader := m.Header.Marshal()
-	encodedQuestion, _ := m.Question.Marshal()
-	encodedAnswer := m.Answer.Marshal()
+	encoded = append(encoded, encodedHeader...)
 
-	byteCount := len(encodedHeader) + len(encodedQuestion) + len(encodedAnswer)
-	encoded := make([]byte, byteCount)
-	copy(encoded, encodedHeader)
-	copy(encoded[len(encodedHeader):], encodedQuestion)
-	copy(encoded[len(encodedHeader)+len(encodedQuestion):], encodedAnswer)
+	for _, quest := range m.Questions {
+		encodedQuestion, _ := quest.Marshal()
+		encoded = append(encoded, encodedQuestion...)
+	}
+
+	for _, ans := range m.Answers {
+		encodedAnswer := ans.Marshal()
+		encoded = append(encoded, encodedAnswer...)
+	}
 
 	return encoded
 }
 
+// UnMarshallMessage decodes a byte slice into a DNS Message struct.
+// It unmarshal the Header and Question fields from the encoded byte slice
+// and sets default values for the Answer field and some Header fields.
+//
+// Parameters:
+// - encoded: A byte slice containing the encoded DNS message.
+//
+// Returns:
+// - A pointer to a Message struct populated with the decoded values.
+// - An error if any issue occurs during decoding.
 func UnMarshallMessage(encoded []byte) (*Message, error) {
 	header := UnmarshalHeader(encoded)
-	question, _, err := UnMarshallQuestion(encoded[HeaderSize:])
+	questions, err := UnmarshalQuestions(encoded, header.QDCount)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var answer Answer
+	answers := make([]Answer, 0, len(questions))
+	for _, quest := range questions {
+		answer := FromQuestion(quest)
+		answers = append(answers, answer)
+	}
 
-	header.ANCount = 1
-	header.QDCount = 1
 	header.QR = true
+	header.ANCount = uint16(len(answers))
 
 	if header.OpCode == 0 {
 		header.RCode = 0
@@ -41,17 +64,8 @@ func UnMarshallMessage(encoded []byte) (*Message, error) {
 	}
 
 	return &Message{
-		Header:   *header,
-		Question: *question,
-		Answer:   answer,
+		Header:    *header,
+		Questions: questions,
+		Answers:   answers,
 	}, nil
-}
-
-func (m *Message) FormAnswer() *Answer {
-	return &Answer{
-		Name:  m.Question.Name,
-		Type:  1,
-		Class: 1,
-		TTL:   60,
-	}
 }

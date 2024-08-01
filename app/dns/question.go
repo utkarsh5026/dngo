@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"strings"
@@ -35,6 +36,13 @@ type Question struct {
 	Class uint16
 }
 
+// Marshal encodes the DNS Question into a byte slice.
+// It converts the Name, Type, and Class fields of the Question into their byte representations
+// and concatenates them into a single byte slice.
+//
+// Returns:
+// - A byte slice containing the encoded DNS Question.
+// - An error if any issue occurs during encoding, such as a label exceeding 63 bytes.
 func (q *Question) Marshal() ([]byte, error) {
 	parts := strings.Split(q.Name, ".")
 
@@ -66,38 +74,84 @@ func (q *Question) Marshal() ([]byte, error) {
 	return buffer, nil
 }
 
-// UnMarshallQuestion decodes a byte slice into a DNS Question struct.
-// The byte slice should contain the encoded DNS question in the format
-// specified by RFC 1035.
+// UnmarshalQuestions decodes a byte slice into a slice of DNS Question structs.
+// It reads the specified number of questions from the DNS message.
 //
 // Parameters:
-// - encoded: A byte slice containing the encoded DNS question.
+// - dnsMessage: A byte slice containing the encoded DNS message.
+// - count: The number of questions to unmarshal.
 //
 // Returns:
-// - A pointer to a Question struct populated with the decoded values.
-//
-// - An integer representing the number of bytes read from the encoded slice.
+// - A slice of Question structs populated with the decoded values.
 //
 // - An error if any issue occurs during decoding.
-func UnMarshallQuestion(encoded []byte) (*Question, int, error) {
+func UnmarshalQuestions(dnsMessage []byte, count uint16) ([]Question, error) {
+	offset := HeaderSize
+	questions := make([]Question, 0, count)
+
+	for i := 0; i < int(count); i++ {
+		// Check if we have enough bytes left to read a question
+		if offset+4 > len(dnsMessage) {
+			return nil, fmt.Errorf("incomplete question at offset %d", offset)
+		}
+
+		label, bytesRead := parseLabel(dnsMessage[offset:], dnsMessage)
+		offset += bytesRead
+
+		question := Question{
+			Name:  label,
+			Type:  1,
+			Class: 1,
+		}
+
+		questions = append(questions, question)
+		offset += 4 // type + class
+	}
+
+	return questions, nil
+}
+
+// parseLabel decodes a DNS label from a byte slice.
+// It handles both uncompressed and compressed labels as specified in RFC 1035.
+//
+// Parameters:
+// - label: A byte slice containing the encoded DNS label.
+// - dnsMessage: A byte slice containing the entire DNS message, used for resolving compressed labels.
+//
+// Returns:
+//
+// - A string representing the decoded domain name.
+//
+// - The number of bytes read from the label.
+func parseLabel(label []byte, dnsMessage []byte) (string, int) {
 	offset := 0
 	var parts []string
-	for {
-		labelLength := int(encoded[offset])
-		if labelLength == 0 {
+
+	// Main parsing loop
+	for label[offset] != 0 {
+		if label[offset]&0xC0 == 0xC0 {
+			pointer := binary.BigEndian.Uint16(label[offset:offset+2]) & 0x3FFF
+			length := uint16(bytes.Index(dnsMessage[pointer:], []byte{0}))
+
+			compressedLabel, _ := parseLabel(dnsMessage[pointer:pointer+length+1], dnsMessage)
+			parts = append(parts, compressedLabel)
+			offset += 2
+
+			if offset >= len(label) {
+				break
+			}
+			continue
+		}
+
+		length := int(label[offset])
+		if offset+1+length > len(label) {
 			break
 		}
-		offset++
-		parts = append(parts, string(encoded[offset:offset+labelLength]))
-		offset += labelLength
-	}
-	offset++
 
-	q := &Question{
-		Name:  strings.Join(parts, "."),
-		Type:  binary.BigEndian.Uint16(encoded[offset : offset+2]),
-		Class: binary.BigEndian.Uint16(encoded[offset+2 : offset+4]),
+		labelPart := string(label[offset+1 : offset+1+length])
+		parts = append(parts, labelPart)
+		offset += length + 1
 	}
 
-	return q, offset + 4, nil
+	return strings.Join(parts, "."), offset
 }

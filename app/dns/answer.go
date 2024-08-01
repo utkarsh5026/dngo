@@ -42,6 +42,12 @@ type Answer struct {
 	RData    []byte
 }
 
+// Marshal encodes the DNS Answer into a byte slice.
+// It marshals the Name, Type, Class, TTL, RDLength, and RData fields of the Answer
+// and concatenates their byte representations into a single byte slice.
+//
+// Returns:
+// - A byte slice containing the encoded DNS Answer.
 func (a *Answer) Marshal() []byte {
 	encodedName := EncodeLabel(a.Name)
 
@@ -66,4 +72,15 @@ func (a *Answer) Marshal() []byte {
 	copy(encoded[offset:], a.RData)
 
 	return encoded
+}
+
+func FromQuestion(q Question) Answer {
+	return Answer{
+		Name:     q.Name,
+		Type:     1,
+		Class:    1,
+		TTL:      60,
+		RDLength: 4,
+		RData:    []byte("\x08\x08\x08\x08"),
+	}
 }
