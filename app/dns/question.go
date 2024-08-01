@@ -65,10 +65,3 @@ func (q *Question) Marshal() ([]byte, error) {
 
 	return buffer, nil
 }
-
-func CreateDnsMessage(header *Header, question *Question) *Message {
-	return &Message{
-		Header:   *header,
-		Question: *question,
-	}
-}

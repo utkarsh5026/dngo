@@ -47,6 +47,7 @@ func main() {
 			ID:      1234,
 			QR:      true,
 			QDCount: 1,
+			ANCount: 1,
 		}
 
 		question := dns.Question{
@@ -55,7 +56,14 @@ func main() {
 			Class: 1,
 		}
 
-		message := dns.CreateDnsMessage(&header, &question)
+		answer := dns.Answer{
+			Name:  "codecrafters.io",
+			Type:  1,
+			Class: 1,
+			TTL:   60,
+		}
+
+		message := dns.CreateDnsMessage(&header, &question, &answer)
 		_, err = udpConn.WriteToUDP(message.Marshal(), source)
 		if err != nil {
 			fmt.Println("Failed to send response:", err)
