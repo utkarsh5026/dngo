@@ -96,3 +96,21 @@ func (h *Header) Marshal() []byte {
 
 	return encoded
 }
+
+func UnmarshalHeader(encoded []byte) *Header {
+	return &Header{
+		ID:      binary.BigEndian.Uint16(encoded[0:2]),
+		QR:      encoded[2]&(1<<7) != 0,
+		OpCode:  (encoded[2] >> 3) & 0xF,
+		AA:      encoded[2]&(1<<2) != 0,
+		TC:      encoded[2]&(1<<1) != 0,
+		RD:      encoded[2]&1 != 0,
+		RA:      encoded[3]&(1<<7) != 0,
+		Z:       (encoded[3] >> 4) & 0xF,
+		RCode:   encoded[3] & 0xF,
+		QDCount: binary.BigEndian.Uint16(encoded[4:6]),
+		ANCount: binary.BigEndian.Uint16(encoded[6:8]),
+		NSCount: binary.BigEndian.Uint16(encoded[8:10]),
+		ARCount: binary.BigEndian.Uint16(encoded[10:12]),
+	}
+}

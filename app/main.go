@@ -42,12 +42,20 @@ func main() {
 		receivedData := string(buf[:size])
 		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
 
-		// Create an empty response
+		receivedHeader := dns.UnmarshalHeader(buf[:size])
 		header := dns.Header{
-			ID:      1234,
+			ID:      receivedHeader.ID,
+			OpCode:  receivedHeader.OpCode,
 			QR:      true,
 			QDCount: 1,
 			ANCount: 1,
+			RD:      receivedHeader.RD,
+		}
+
+		if receivedHeader.OpCode == 0 {
+			header.RCode = 0
+		} else {
+			header.RCode = 4
 		}
 
 		question := dns.Question{
