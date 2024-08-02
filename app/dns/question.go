@@ -1,7 +1,6 @@
 package dns
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"strings"
@@ -91,13 +90,15 @@ func UnmarshalQuestions(dnsMessage []byte, count uint16) ([]Question, error) {
 
 	for i := 0; i < int(count); i++ {
 		// Check if we have enough bytes left to read a question
-		if offset+4 > len(dnsMessage) {
+		typeClassByteCount := 4
+		if offset+typeClassByteCount > len(dnsMessage) {
 			return nil, fmt.Errorf("incomplete question at offset %d", offset)
 		}
 
 		label, bytesRead := parseLabel(dnsMessage[offset:], dnsMessage)
 		offset += bytesRead
 
+		fmt.Println("label parsed", label)
 		question := Question{
 			Name:  label,
 			Type:  1,
@@ -105,7 +106,7 @@ func UnmarshalQuestions(dnsMessage []byte, count uint16) ([]Question, error) {
 		}
 
 		questions = append(questions, question)
-		offset += 4 // type + class
+		offset += typeClassByteCount // type + class
 	}
 
 	return questions, nil
@@ -127,20 +128,22 @@ func parseLabel(label []byte, dnsMessage []byte) (string, int) {
 	offset := 0
 	var parts []string
 
+	// Check for empty label
+	if len(label) == 0 {
+		return "", 0
+	}
+
 	// Main parsing loop
-	for label[offset] != 0 {
+	for offset < len(label) && label[offset] != 0 {
 		if label[offset]&0xC0 == 0xC0 {
-			pointer := binary.BigEndian.Uint16(label[offset:offset+2]) & 0x3FFF
-			length := uint16(bytes.Index(dnsMessage[pointer:], []byte{0}))
-
-			compressedLabel, _ := parseLabel(dnsMessage[pointer:pointer+length+1], dnsMessage)
-			parts = append(parts, compressedLabel)
-			offset += 2
-
-			if offset >= len(label) {
+			if offset+2 > len(label) {
 				break
 			}
-			continue
+			pointer := binary.BigEndian.Uint16(label[offset:offset+2]) & 0x3FFF
+			compressedLabel, _ := parseLabel(dnsMessage[pointer:], dnsMessage)
+			parts = append(parts, compressedLabel)
+			offset += 2
+			break // We should stop after a compression pointer
 		}
 
 		length := int(label[offset])
@@ -151,6 +154,11 @@ func parseLabel(label []byte, dnsMessage []byte) (string, int) {
 		labelPart := string(label[offset+1 : offset+1+length])
 		parts = append(parts, labelPart)
 		offset += length + 1
+	}
+
+	// Increment offset for the zero byte, if present
+	if offset < len(label) && label[offset] == 0 {
+		offset++
 	}
 
 	return strings.Join(parts, "."), offset

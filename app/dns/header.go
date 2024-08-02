@@ -1,6 +1,10 @@
 package dns
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"fmt"
+	"strings"
+)
 
 const (
 	HeaderSize = 12
@@ -121,4 +125,32 @@ func UnmarshalHeader(encoded []byte) *Header {
 		NSCount: binary.BigEndian.Uint16(encoded[8:10]),
 		ARCount: binary.BigEndian.Uint16(encoded[10:12]),
 	}
+}
+
+func (h *Header) String() string {
+	var result strings.Builder
+
+	result.WriteString(fmt.Sprintf("ID:      %d (%016b)\n", h.ID, h.ID))
+	result.WriteString(fmt.Sprintf("QR:      %t (%01b)\n", h.QR, boolToBit(h.QR)))
+	result.WriteString(fmt.Sprintf("OpCode:  %d (%04b)\n", h.OpCode, h.OpCode))
+	result.WriteString(fmt.Sprintf("AA:      %t (%01b)\n", h.AA, boolToBit(h.AA)))
+	result.WriteString(fmt.Sprintf("TC:      %t (%01b)\n", h.TC, boolToBit(h.TC)))
+	result.WriteString(fmt.Sprintf("RD:      %t (%01b)\n", h.RD, boolToBit(h.RD)))
+	result.WriteString(fmt.Sprintf("RA:      %t (%01b)\n", h.RA, boolToBit(h.RA)))
+	result.WriteString(fmt.Sprintf("Z:       %d (%03b)\n", h.Z, h.Z))
+	result.WriteString(fmt.Sprintf("RCode:   %d (%04b)\n", h.RCode, h.RCode))
+	result.WriteString(fmt.Sprintf("QDCount: %d (%016b)\n", h.QDCount, h.QDCount))
+	result.WriteString(fmt.Sprintf("ANCount: %d (%016b)\n", h.ANCount, h.ANCount))
+	result.WriteString(fmt.Sprintf("NSCount: %d (%016b)\n", h.NSCount, h.NSCount))
+	result.WriteString(fmt.Sprintf("ARCount: %d (%016b)\n", h.ARCount, h.ARCount))
+
+	return result.String()
+}
+
+// Helper function to convert bool to bit
+func boolToBit(b bool) uint8 {
+	if b {
+		return 1
+	}
+	return 0
 }
