@@ -60,6 +60,10 @@ func resolveQuestion(question dns.Question, resolver *net.Resolver) ([]dns.Answe
 
 		answers := make([]dns.Answer, 0, len(ips))
 		for _, ip := range ips {
+
+			if ip.IP.To4() == nil {
+				continue
+			}
 			fmt.Println("Resolved", question.Name, "to", ip.IP)
 			newAns := answer
 			newAns.RDLength = uint16(len(ip.IP))
