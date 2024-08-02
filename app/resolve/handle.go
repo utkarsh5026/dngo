@@ -62,7 +62,7 @@ func resolveQuestion(question dns.Question, resolver *net.Resolver) ([]dns.Answe
 		for _, ip := range ips {
 			fmt.Println("Resolved", question.Name, "to", ip.IP)
 			newAns := answer
-			newAns.RData = ip.IP
+			newAns.RData = ip.IP.To4()
 			answers = append(answers, newAns)
 		}
 		return answers, nil
