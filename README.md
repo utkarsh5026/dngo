@@ -2,58 +2,57 @@
 
 [![progress-banner](https://backend.codecrafters.io/progress/dns-server/2204d057-36c3-40cf-81ea-892532c3fbb6)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
 
-## 📝 Project Overview
+## 📝 Introduction
 
-This project implements a DNS server that:
-- 📦 Parses and creates DNS packets according to RFC 1035
-- 🔄 Responds to DNS queries
-- 📋 Handles multiple record types (A, AAAA)
-- 🔍 Supports recursive resolution using forwarding servers
-- 🗜️ Implements DNS message compression
+A modern DNS server implementation that provides:
+- 📦 RFC 1035-compliant DNS packet handling
+- 🔄 Efficient query resolution
+- 📋 Support for common record types (A, AAAA)
+- 🔍 Smart recursive resolution with forwarding
+- 🗜️ Optimized message compression
 
 
-## ✨ Features
+## ✨ Key Features
 
-- **🔍 DNS Packet Parsing**: Full implementation of DNS packet structure including headers, questions, and answers
+- **🔍 DNS Packet Parsing**: Robust implementation of DNS packet structures including headers, questions, and answers
 - **📋 Record Types Support**: 
   - A Records (IPv4 addresses)
   - AAAA Records (IPv6 addresses)
-- **🔄 Recursive Resolution**: Ability to forward queries to upstream DNS servers
-- **⚠️ Error Handling**: Proper handling of various DNS error conditions
-- **🗜️ Message Compression**: Implementation of DNS message compression for efficient packet size
+- **🔄 Recursive Resolution**: Intelligent query forwarding to upstream DNS servers
+- **⚠️ Error Handling**: Comprehensive handling of DNS error conditions
+- **🗜️ Message Compression**: Smart DNS message compression for optimal performance
 
 
-### 🔧 Components
+### 🔧 Core Components
 
 1. **📝 DNS Header Processing**
-   - 12-byte header structure
-   - Query/Response identification
-   - Operation codes and response codes
-   - Various control flags (AA, TC, RD, RA)
+   - Efficient 12-byte header handling
+   - Robust query/response identification
+   - Comprehensive flag management (AA, TC, RD, RA)
 
 2. **❓ Question Section**
-   - Domain name parsing
-   - Query type handling
-   - Class code support
+   - Intelligent domain name parsing
+   - Flexible query type handling
+   - Full class code support
 
 3. **✅ Answer Section**
-   - Resource Record (RR) formatting
-   - TTL management
-   - Data length handling
-   - Record type-specific data formatting
+   - Clean Resource Record (RR) formatting
+   - Smart TTL management
+   - Precise data length handling
+   - Type-specific data formatting
 
 4. **🔍 Name Resolution**
-   - Label compression
-   - Pointer handling
-   - Domain name encoding/decoding
+   - Efficient label compression
+   - Reliable pointer handling
+   - Optimized domain name processing
 
 
-## 🎯 Conclusion & Next Steps
+## 🎯 Summary & Roadmap
 
-This DNS server implementation provides a robust foundation for handling DNS queries and responses. The modular design and RFC-compliant implementation ensure reliability and extensibility.
+This implementation offers a solid foundation for DNS operations with a focus on reliability and extensibility.
 
 ### 🔜 Future Enhancements
-- 🔒 Support for DNSSEC
-- 🌐 Implementation of additional record types (MX, TXT, etc.)
-- ⚡ Performance optimizations for high-traffic scenarios
-- 📊 Metrics and monitoring integration
+- 🔒 DNSSEC implementation
+- 🌐 Extended record type support (MX, TXT, etc.)
+- ⚡ Performance optimizations
+- 📊 Monitoring and metrics integration
